@@ -20,8 +20,8 @@ class Event:
 
 class EventBuilder:
     """Builder pattern"""
-    def __init__(self):
-        self._event = Event()
+    def __init__(self,event=Event()):
+        self._event = event
     def as_calendar_event(self):
         setattr(self, 'king',"calendar#event")
     def with_summary(self,summary:str):
@@ -53,9 +53,8 @@ class EventBuilder:
         """Proper format: <EMAIL>,<EMAIL>"""
         if not isinstance(attendees_emails,list):
             attendees_emails = attendees_emails.split(',')
-        setattr(self._event, 'attendees',([
-            {'emails':attendees_email}
-            ] for attendees_email in attendees_emails))
+        setattr(self._event, 'attendees',
+                [{'email':email} for email in attendees_emails])
         return self
 
     def with_color_id(self, color_id: str):

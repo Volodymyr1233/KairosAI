@@ -67,6 +67,14 @@ def addEvent(user_token_dict:dict,event: Event,calendar_id: str = 'primary',):
     service = build("calendar", "v3", credentials=getCredentials(user_token_dict))
     created_event = service.events().insert(calendarId=calendar_id, body=event.to_dict()).execute()
     return created_event
+
+def updateEvent(user_token_dict:dict, event: Event, calendar_id: str = 'primary'):
+    if not hasattr(event,'id') or event.id is None:
+        raise ValueError('no eventId')
+    service = build("calendar", "v3", credentials=getCredentials(user_token_dict))
+    updated_event = service.events().update(calendarId=calendar_id,eventId=event.id, body=event.to_dict()).execute()
+    return updated_event
+
 if __name__ == '__main__':
     from Event import *
     secret_key_dict = None
@@ -83,8 +91,8 @@ if __name__ == '__main__':
     def add_event_test():
         e = (EventBuilder().
              with_summary('KairosAI_test idz na zajecia').with_description('test 03.06.25').
-             with_start_date(datetime(2026,6,3,14,5,tzinfo=timezone.utc).isoformat()).
-             with_end_date(datetime(2026,6,3,15,tzinfo=timezone.utc).isoformat()).
+             with_start_date(datetime(2025,6,3,14,5,tzinfo=timezone.utc).isoformat()).
+             with_end_date(datetime(2025,6,3,15,tzinfo=timezone.utc).isoformat()).
              with_reminders(useDefault=False,overrides=[{
             'method':"email","minutes":10
         }])
@@ -93,5 +101,11 @@ if __name__ == '__main__':
         x = addEvent(test_token,e)
         for k,v in x.items():
             print(k,v)
-    #print_future_events()
+        x = EventBuilder(Event(x)).with_description('po updatecie').with_summary('kairosAU_update_test').build()
+        x = updateEvent(test_token,x)
+        for k,v in x.items():
+            print(k,v)
     add_event_test()
+
+
+
