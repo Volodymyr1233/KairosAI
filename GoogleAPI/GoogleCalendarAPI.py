@@ -6,7 +6,8 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 import json
-from Event import Event
+#from Event import Event
+from GoogleAPI.Event import Event
 from googleapiclient.errors import HttpError
 
 
@@ -31,9 +32,9 @@ def getCredentials(user_token_dict:dict)->Credentials:
 
 def getEvents(user_token_dict:dict,
               calendar_id: str = 'primary',
-              time_min: datetime = datetime(1970, 1, 1, tzinfo=timezone.utc),
-              time_max: datetime = datetime(2100, 1, 1, tzinfo=timezone.utc),
-              max_results: int = 2500,
+              time_min: str = datetime(1970, 1, 1, tzinfo=timezone.utc).isoformat(),
+              time_max: str = datetime(2100, 1, 1, tzinfo=timezone.utc).isoformat(),
+              max_results: int = 15,
               order_by: str = 'startTime',
               show_deleted: bool = False,
               single_events: bool = True,
@@ -45,8 +46,8 @@ def getEvents(user_token_dict:dict,
     service = build('calendar', 'v3', credentials=creds)
     args = {
         'calendarId': calendar_id,
-        'timeMin': time_min.isoformat(),
-        'timeMax': time_max.isoformat(),
+        'timeMin': time_min,
+        'timeMax': time_max,
         'maxResults': max_results,
         'orderBy': order_by,
         'showDeleted': show_deleted,
@@ -61,7 +62,7 @@ def getEvents(user_token_dict:dict,
         ).execute()
         return [Event(x) for x in event_results.get('items', [])]
     except HttpError as err:
-        return err
+        raise err
 
 def addEvent(user_token_dict:dict,event: Event,calendar_id: str = 'primary',):
     service = build("calendar", "v3", credentials=getCredentials(user_token_dict))
@@ -84,7 +85,7 @@ if __name__ == '__main__':
     with open('test_token.json', 'r',encoding='UTF-8') as f:
         test_token = json.load(f)
     def print_future_events():
-        events = getEvents(test_token,time_min=datetime.now(timezone.utc))
+        events = getEvents(test_token,time_min=datetime.now(timezone.utc).isoformat())
         for e in events:
             print(e)
 
@@ -105,7 +106,8 @@ if __name__ == '__main__':
         x = updateEvent(test_token,x)
         for k,v in x.items():
             print(k,v)
-    add_event_test()
+    #add_event_test()
+    print_future_events()
 
 
 
