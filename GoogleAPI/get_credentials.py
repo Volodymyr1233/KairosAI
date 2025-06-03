@@ -1,9 +1,9 @@
-from Tools.scripts import google
+
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
 
 
-SECRET_KEY_PATH = "googleapi_client_secret.json"
+SECRET_KEY_PATH = "E:/Programowanie/Python/KairosAI/GoogleAPI/googleapi_client_secret.json"
 
 def get_credentials()->Credentials:
     SCOPES = ['https://www.googleapis.com/auth/calendar']
