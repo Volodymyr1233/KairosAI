@@ -23,7 +23,7 @@ def getCredentials(user_token_dict:dict)->Credentials:
             try:
                 creds.refresh(Request())
             except google.auth.exceptions.RefreshError as e:
-                raise e
+                raise google.auth.exceptions.RefreshError(f'cannot refresh token: {e}')
         else:
             raise google.oauth2.credentials.exceptions.DefaultCredentialsError('token is not valid')
     return creds
