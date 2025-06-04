@@ -1,9 +1,10 @@
 from oauthlib.oauth2.rfc6749.errors import AccessDeniedError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
+from pathlib import Path
 
 
-SECRET_KEY_PATH = "E:/Programowanie/Python/KairosAI/GoogleAPI/googleapi_client_secret.json"
+SECRET_KEY_PATH = str(Path(__file__).resolve().parent / "client_secret.json")
 
 def get_credentials()->Credentials | None:
     try:

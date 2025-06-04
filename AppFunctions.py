@@ -16,6 +16,7 @@ def get_credentials_from_db(user_id:str)->dict | None:
     get = Models.user_google_token.get_or_none(id=user_id)
     return get.__dict__['__data__'] if get is not None else None
 if __name__ == '__main__':
+   auth_into_db("5")
    from datetime import datetime,timezone
    for e in GoogleCalendarAPI.getEvents(get_credentials_from_db('5'),time_max=datetime(2025, 6, 3, tzinfo=timezone.utc).isoformat()):
        print(e)
