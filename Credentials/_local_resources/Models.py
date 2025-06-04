@@ -1,6 +1,10 @@
 from peewee import *
-from db import db
 
+
+db = SqliteDatabase('E:/Programowanie/Python/KairosAI/Credentials/_local_resources/baza.db')
+db.connect()
+if db.is_closed():
+    raise RuntimeError('Database is closed')
 class user_google_token(Model):
     id = CharField(primary_key=True)
     token = CharField()
@@ -19,7 +23,7 @@ if __name__ == '__main__':
     if input('do you want to create user_google_token? (y/n) ') == 'y':
         db.create_tables([user_google_token], safe=True)
 
-    from GoogleAPI import get_credentials
+    from Credentials import get_credentials
     import json
     cred = get_credentials.get_credentials()
 
