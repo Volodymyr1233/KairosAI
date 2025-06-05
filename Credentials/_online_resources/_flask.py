@@ -4,6 +4,7 @@ import json
 import urllib.parse
 import Models
 class Meta:
+    security_token = 'token123' #query database security token
     scope = 'https://www.googleapis.com/auth/calendar'
     client_id =''
     project_id =''
@@ -72,7 +73,7 @@ def callback():
         else:
             return flask.Response(f'error: {error}', status=response.status_code)
 
-    data_token = convert_response(user_id,scope,response.json())
+    data_token = _convert_response(user_id, scope, response.json())
     if data_token is None:
         return flask.Response(f'non valid reponse {response.json()}', status=400)
     print('adding token:')
@@ -81,7 +82,7 @@ def callback():
     Models.user_google_token.insert(**data_token).on_conflict_replace().execute()
     return flask.Response('Działa!', status=200)
 
-def convert_response(user_id,scope,d:dict):
+def _convert_response(user_id, scope, d:dict):
     try:
         result = dict()
         result['id'] = user_id
@@ -100,10 +101,24 @@ def convert_response(user_id,scope,d:dict):
     return result
 @app.route('/db',methods=['GET'])
 def get_record_db():
-    data = flask.request.json()
+    """:params .json = {'security_token:token123,user_id:5}"""
+    if not flask.request.is_json:
+        return flask.Response('Missing json', status=400)
+    data = flask.request.json
     if data is None:
         return flask.Response('No data', status=400)
-    if 'token' not in data:
-        return flask.Response('Missing token', status=400)
+    if 'security_token' not in data:
+        return flask.Response('Missing security_token', status=400)
+    if 'user_id' not in data:
+        return flask.Response('Missing user_id', status=400)
+    if data['security_token'] != m.security_token:
+        return flask.Response('Invalid security_token', status=400)
+    try:
+        x = Models.user_google_token.get(id=data['user_id'])
+    except Exception as e:
+        return flask.Response(f'User not found {e}', status=404)
+    else:
+        return flask.jsonify(x.__dict__['__data__'])
+
 if __name__ == '__main__':
     app.run(port=5000,debug=True)
