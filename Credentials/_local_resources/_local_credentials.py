@@ -6,7 +6,7 @@ import google.auth.exceptions
 from Credentials._local_resources import Models
 from GoogleAPI import GoogleCalendarAPI
 
-SECRET_KEY_PATH = "E:\Programowanie\Python\KairosAI\Credentials\_local_resources\googleapi_client_secret.json"
+SECRET_KEY_PATH = "E:/Programowanie/Python/KairosAI/Credentials/_local_resources/test_token_local.json"
 
 def get_credentials()->Credentials | None:
     try:
