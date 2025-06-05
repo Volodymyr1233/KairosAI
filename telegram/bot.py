@@ -23,7 +23,6 @@ markup.add(
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     #print(message.from_user.first_name)
-    print(message.from_user.id)
     auth_into_db(message.from_user.id)
     bot.send_message(message.chat.id, "Siema chłopie. Co mogę dla ciebie dziś zrobić?")
 
