@@ -50,22 +50,54 @@ class EventBuilder:
         self._event.end['dateTime'] = self._check_date_format(dateTime)
         return self
     def with_attendees(self,attendees_emails:list | str):
-        """Proper format: <EMAIL>,<EMAIL>"""
+        """Proper format: [<EMAIL>,<EMAIL>]"""
         if not isinstance(attendees_emails,list):
             attendees_emails = attendees_emails.split(',')
+        for email in attendees_emails:
+            temp = email.split('@')
+            if len(temp) != 2 or len(temp[0])==0 or len(temp[1])==0 or len(temp[1].split('.'))==0:
+                raise ValueError('Invalid email format')
         setattr(self._event, 'attendees',
                 [{'email':email} for email in attendees_emails])
         return self
 
     def with_color_id(self, color_id: str):
+        """Proper format: not Hex, must be in [1,2,3,4,5,6,7,8,9]"""
         setattr(self._event, 'colorId', color_id)
         return self
-    def with_reminders(self,useDefault:bool,overrides:dict[str,str]):
+    def with_reminders(self,useDefault:bool,overrides:list[dict[str,str | int]]):
+        """useDefault: use default reminders,
+        overrides: [{'method':'popup' | 'email',  'minutes':int>=0}]"""
+        for x in overrides:
+            if not 'method' in x:
+                raise ValueError('invalid override no method')
+            else:
+                if not x['method'] in ('popup','email'):
+                    raise ValueError('invalid override method')
+            if not 'minutes' in x:
+                raise ValueError('invalid override no minutes')
+            else:
+                if not isinstance(x['minutes'],int) or x['minutes'] < 0:
+                    raise ValueError('invalid override minutes')
         setattr(self._event, 'reminders', {
             'useDefault': useDefault,
             'overrides': overrides
         })
         return self
+    def add_reminder(self,method:str,minutes:int):
+        """method: 'popup' | 'email',  minutes: int>=0"""
+        if not method in ('popup','email'):
+            raise ValueError('invalid reminder method')
+        if minutes < 0:
+            raise ValueError('invalid reminder minutes')
+        reminder = {'method':method,'minutes':minutes}
+        if hasattr(self._event,'reminders'):
+            temp = self._event.reminders
+            temp['overrides'].append(reminder)
+            return self
+        else:
+            return self.with_reminders(False,[reminder])
+
     def with_description(self,description:str):
         setattr(self._event, 'description', description)
         return self
@@ -81,7 +113,18 @@ class EventBuilder:
             'email': email,
             'displayName': displayName if displayName else ''
         })
-    def build(self):
+    def with_anyoneCanAddSelf(self,b:bool):
+        setattr(self._event, 'anyoneCanAddSelf', b)
+        return self
+    def with_guestsCanInviteOthers(self,b:bool):
+        setattr(self._event, 'guestsCanInviteOthers', b)
+        return self
+    def with_guestsCanModify(self,b:bool):
+        setattr(self._event, 'guestsCanModify', b)
+    def with_guestsCanSeeOtherGuests(self,b:bool):
+        setattr(self._event, 'guestsCanSeeOtherGuests', b)
+        return self
+    def build(self)->Event:
         if not hasattr(self._event, 'summary'):
             raise ValueError(f'event summary is required')
         if not hasattr(self._event,'start'):
@@ -89,187 +132,4 @@ class EventBuilder:
         if not hasattr(self._event,'end'):
             raise ValueError(f'event end is required')
         return self._event
-
-
-
-
-"""
-        {
-          "kind": "calendar#event",
-          "etag": etag,
-          "id": string,
-          "status": string,
-          "htmlLink": string,
-          "created": datetime,
-          "updated": datetime,
-          "summary": string,
-          "description": string,
-          "location": string,
-          "colorId": string,
-          "creator": {
-            "id": string,
-            "email": string,
-            "displayName": string,
-            "self": boolean
-          },
-          "organizer": {
-            "id": string,
-            "email": string,
-            "displayName": string,
-            "self": boolean
-          },
-          "start": {
-            "date": date,
-            "dateTime": datetime,
-            "timeZone": string
-          },
-          "end": {
-            "date": date,
-            "dateTime": datetime,
-            "timeZone": string
-          },
-          "endTimeUnspecified": boolean,
-          "recurrence": [
-            string
-          ],
-          "recurringEventId": string,
-          "originalStartTime": {
-            "date": date,
-            "dateTime": datetime,
-            "timeZone": string
-          },
-          "transparency": string,
-          "visibility": string,
-          "iCalUID": string,
-          "sequence": integer,
-          "attendees": [
-            {
-              "id": string,
-              "email": string,
-              "displayName": string,
-              "organizer": boolean,
-              "self": boolean,
-              "resource": boolean,
-              "optional": boolean,
-              "responseStatus": string,
-              "comment": string,
-              "additionalGuests": integer
-            }
-          ],
-          "attendeesOmitted": boolean,
-          "extendedProperties": {
-            "private": {
-              (key): string
-            },
-            "shared": {
-              (key): string
-            }
-          },
-          "hangoutLink": string,
-          "conferenceData": {
-            "createRequest": {
-              "requestId": string,
-              "conferenceSolutionKey": {
-                "type": string
-              },
-              "status": {
-                "statusCode": string
-              }
-            },
-            "entryPoints": [
-              {
-                "entryPointType": string,
-                "uri": string,
-                "label": string,
-                "pin": string,
-                "accessCode": string,
-                "meetingCode": string,
-                "passcode": string,
-                "password": string
-              }
-            ],
-            "conferenceSolution": {
-              "key": {
-                "type": string
-              },
-              "name": string,
-              "iconUri": string
-            },
-            "conferenceId": string,
-            "signature": string,
-            "notes": string,
-          },
-          "gadget": {
-            "type": string,
-            "title": string,
-            "link": string,
-            "iconLink": string,
-            "width": integer,
-            "height": integer,
-            "display": string,
-            "preferences": {
-              (key): string
-            }
-          },
-          "anyoneCanAddSelf": boolean,
-          "guestsCanInviteOthers": boolean,
-          "guestsCanModify": boolean,
-          "guestsCanSeeOtherGuests": boolean,
-          "privateCopy": boolean,
-          "locked": boolean,
-          "reminders": {
-            "useDefault": boolean,
-            "overrides": [
-              {
-                "method": string,
-                "minutes": integer
-              }
-            ]
-          },
-          "source": {
-            "url": string,
-            "title": string
-          },
-          "workingLocationProperties": {
-            "type": string,
-            "homeOffice": (value),
-            "customLocation": {
-              "label": string
-            },
-            "officeLocation": {
-              "buildingId": string,
-              "floorId": string,
-              "floorSectionId": string,
-              "deskId": string,
-              "label": string
-            }
-          },
-          "outOfOfficeProperties": {
-            "autoDeclineMode": string,
-            "declineMessage": string
-          },
-          "focusTimeProperties": {
-            "autoDeclineMode": string,
-            "declineMessage": string,
-            "chatStatus": string
-          },
-          "attachments": [
-            {
-              "fileUrl": string,
-              "title": string,
-              "mimeType": string,
-              "iconLink": string,
-              "fileId": string
-            }
-          ],
-          "birthdayProperties": {
-            "contact": string,
-            "type": string,
-            "customTypeName": string
-          },
-          "eventType": string
-        }
-        """
-
-
 
