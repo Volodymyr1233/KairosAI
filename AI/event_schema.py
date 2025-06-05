@@ -6,6 +6,7 @@ class EventType(enum.Enum):
   ADD = "Add"
   EDIT = "Edit"
   REMOVE = "Remove"
+  SHOW = "Show"
   UNKNOWN = 'Unknown'
 
 

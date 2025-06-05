@@ -1,4 +1,3 @@
-
 from datetime import datetime,timezone
 from typing import Optional
 import google.auth.exceptions
@@ -7,8 +6,6 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from GoogleAPI.Event import Event
 from googleapiclient.errors import HttpError
-
-
 
 
 def getCredentials(user_token_dict:dict)->Credentials:
@@ -30,8 +27,8 @@ def getCredentials(user_token_dict:dict)->Credentials:
 
 def getEvents(user_token_dict:dict,
               calendar_id: str = 'primary',
-              time_min: str = datetime(1970, 1, 1, tzinfo=timezone.utc).isoformat(),
-              time_max: str = datetime(2100, 1, 1, tzinfo=timezone.utc).isoformat(),
+              time_min: str = datetime(1970, 1, 1,  tzinfo=timezone.utc).isoformat(),
+              time_max: str = datetime(2100, 1, 1,  tzinfo=timezone.utc).isoformat(),
               max_results: int = 200,
               order_by: str = 'startTime',
               show_deleted: bool = False,

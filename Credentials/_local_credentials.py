@@ -5,8 +5,9 @@ import json
 import google.auth.exceptions
 from Credentials._local_resources import Models
 from GoogleAPI import GoogleCalendarAPI
+from pathlib import Path
 
-SECRET_KEY_PATH = "E:\Programowanie\Python\KairosAI\Credentials\_local_resources\googleapi_client_secret.json"
+SECRET_KEY_PATH = str(Path(__file__).resolve().parent.parent/"GoogleApi/client_secret.json")
 
 def get_credentials()->Credentials | None:
     try:

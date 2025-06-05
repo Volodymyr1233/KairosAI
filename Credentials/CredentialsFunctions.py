@@ -1,4 +1,5 @@
-import _local_credentials
+import Credentials._local_credentials as _local_credentials
+
 def create_authorization_url(user_id:str)->str:
     """:returns authorization url"""
     _local_credentials.auth_into_db(user_id)
