@@ -13,5 +13,6 @@ class EventType(enum.Enum):
 class EventAction(BaseModel):
     event_type: EventType
     event_name: None | str
+    new_event_name_for_update: None | str
     data_start: datetime
     data_end: datetime
