@@ -3,6 +3,7 @@ import requests
 import json
 import urllib.parse
 import Models
+from datetime import datetime, timedelta, timezone
 class Meta:
     security_token = 'token123' #query database security token
     scope = 'https://www.googleapis.com/auth/calendar'
@@ -94,7 +95,8 @@ def _convert_response(user_id, scope, d:dict):
         result['scopes'] = scope
         result['universe_domain'] = ''
         result['account'] = ''
-        result['expiry'] = d['expires_in']
+        expiry_time = datetime.now(timezone.utc) + timedelta(seconds=d['expires_in'])
+        result['expiry'] = expiry_time.isoformat()
     except Exception as e:
         print(e)
         return None
