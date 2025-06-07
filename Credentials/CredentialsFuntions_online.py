@@ -3,7 +3,7 @@ import json
 import requests
 
 URL_app = 'https://kairosai.pl'
-security_token = 'token123'
+security_token = '0PHVCsD5u08geRLgcBhV3udq2mURwgrTcV8W2ZYdGEZcj754f4s17SMSSTyGTxmT'
 def _request(user_id,security_token)->dict | None:
     data = {'security_token': security_token, 'user_id': user_id}
     headers = {"Content-Type": "application/json"}

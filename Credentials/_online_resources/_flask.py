@@ -2,6 +2,9 @@ import flask
 import requests
 import json
 import urllib.parse
+
+from flask import render_template
+
 import Models
 from datetime import datetime, timedelta, timezone
 class Meta:
@@ -33,7 +36,7 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
-   return 'dzien dobry'
+   return render_template('index.html')
 
 @app.route('/auth',methods=['GET'])
 def get_auth():
@@ -81,7 +84,7 @@ def callback():
     for k,v in data_token.items():
         print(k,v)
     Models.user_google_token.insert(**data_token).on_conflict_replace().execute()
-    return flask.Response('Działa!', status=200)
+    return render_template('auth_correct.html')
 
 def _convert_response(user_id, scope, d:dict):
     try:
