@@ -2,13 +2,11 @@ import flask
 import requests
 import json
 import urllib.parse
-
-from flask import render_template
-
-import Models
 from datetime import datetime, timedelta, timezone
+import Models
+
 class Meta:
-    security_token = 'token123' #query database security token
+    security_token = '0PHVCsD5u08geRLgcBhV3udq2mURwgrTcV8W2ZYdGEZcj754f4s17SMSSTyGTxmT' #query database security token
     scope = 'https://www.googleapis.com/auth/calendar'
     client_id =''
     project_id =''
@@ -36,7 +34,7 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
-   return render_template('index.html')
+   return flask.render_template('index.html')
 
 @app.route('/auth',methods=['GET'])
 def get_auth():
@@ -84,7 +82,7 @@ def callback():
     for k,v in data_token.items():
         print(k,v)
     Models.user_google_token.insert(**data_token).on_conflict_replace().execute()
-    return render_template('auth_correct.html')
+    return flask.render_template('auth_correct.html')
 
 def _convert_response(user_id, scope, d:dict):
     try:
