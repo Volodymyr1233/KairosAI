@@ -1,7 +1,9 @@
 from peewee import *
+from pathlib import Path
 
 
-db = SqliteDatabase('E:/Programowanie/Python/KairosAI/Credentials/_local_resources/baza.db')
+db_path = str(Path(__file__).parent.resolve()/"baza.db")
+db = SqliteDatabase(db_path)
 db.connect()
 if db.is_closed():
     raise RuntimeError('Database is closed')

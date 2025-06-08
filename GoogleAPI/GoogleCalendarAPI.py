@@ -126,7 +126,7 @@ class Reminder:
             def __inner_f(ev):
                 for x in ev.reminders['overrides']:
                     date = datetime.fromisoformat(ev.start['dateTime']) - timedelta(minutes=x['minutes'])
-                    if date>=time_min:
+                    if date<=time_min:
                         self._events.append((ev.id,date))
 
             for event in events:
