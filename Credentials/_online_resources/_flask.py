@@ -2,9 +2,11 @@ import flask
 import requests
 import json
 import urllib.parse
+from datetime import datetime, timedelta, timezone
 import Models
+
 class Meta:
-    security_token = 'token123' #query database security token
+    security_token = '0PHVCsD5u08geRLgcBhV3udq2mURwgrTcV8W2ZYdGEZcj754f4s17SMSSTyGTxmT' #query database security token
     scope = 'https://www.googleapis.com/auth/calendar'
     client_id =''
     project_id =''
@@ -32,7 +34,7 @@ app = flask.Flask(__name__)
 
 @app.route('/')
 def index():
-   return 'dzien dobry'
+   return flask.render_template('index.html')
 
 @app.route('/auth',methods=['GET'])
 def get_auth():
@@ -80,7 +82,7 @@ def callback():
     for k,v in data_token.items():
         print(k,v)
     Models.user_google_token.insert(**data_token).on_conflict_replace().execute()
-    return flask.Response('Działa!', status=200)
+    return flask.render_template('auth_correct.html')
 
 def _convert_response(user_id, scope, d:dict):
     try:
@@ -94,7 +96,8 @@ def _convert_response(user_id, scope, d:dict):
         result['scopes'] = scope
         result['universe_domain'] = ''
         result['account'] = ''
-        result['expiry'] = d['expires_in']
+        expiry_time = datetime.now(timezone.utc) + timedelta(seconds=d['expires_in'])
+        result['expiry'] = expiry_time.isoformat()
     except Exception as e:
         print(e)
         return None
