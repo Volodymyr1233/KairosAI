@@ -28,4 +28,4 @@ def ai_parse_text(user_input):
 
 
 if __name__ == "__main__":
-    print(ai_parse_text("dobra a weź mi ten zmień tytuł wydarzenia spotkanie ze Sławomirem na spotkanie z przyjaciółmi"))
+    print(ai_parse_text("dodaj spotkanie z Pawłem jutro od 15 do 18, pokaż ostatnie utworzone spotkanie"))

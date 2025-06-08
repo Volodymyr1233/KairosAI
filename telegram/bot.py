@@ -4,7 +4,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from AI.ai_handler import ai_parse_text
 from utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
-from Credentials.CredentialsFunctions import check_user_credentials, create_authorization_url, get_user_credential
+from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, get_user_credential
 from AI.event_schema import EventType
 from GoogleAPI.GoogleCalendarAPI import deleteEvent
 from Credentials.CredentialsFunctions import get_user_credential
@@ -21,17 +21,19 @@ markup.add(
     InlineKeyboardButton("No", callback_data='no')
 )
 
-login_markup = InlineKeyboardMarkup()
-login_markup.add(InlineKeyboardButton("Login", callback_data="login"))
+
+
 
 users_input = {}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    login_markup = InlineKeyboardMarkup()
+    login_markup.add(InlineKeyboardButton("Login", url=create_authorization_url(message.from_user.id)))
     if (check_user_credentials(message.from_user.id)):
-        bot.send_message(message.chat.id, "Siema chłopie. Co mogę dla ciebie dziś zrobić?")
+        bot.send_message(message.chat.id, "Cześć! Jak mogę ci dziś pomóc? 😊")
     else:
-        bot.send_message(message.chat.id, "Siema nie mam twoich danych, weź się zaloguj", reply_markup=login_markup)
+        bot.send_message(message.chat.id,  "Hej! Wygląda na to, że nie jesteś zalogowany. Kliknij poniżej, aby się zalogować ⬇️", reply_markup=login_markup)
 
 @bot.message_handler(func=lambda mess: f"{mess.from_user.id}_generated_remove_indexes" in users_input and mess.text in users_input[f"{mess.from_user.id}_generated_remove_indexes"])
 def send_remove_answer(message):
@@ -51,6 +53,7 @@ def send_update_answer(message):
         bot.send_message(message.from_user.id, "Żaden ewent nie został zaktualizowany!", reply_markup=ReplyKeyboardRemove())
     else:
         update_index = int(message.text) - 1
+        print(users_input[message.from_user.id])
         update_event(message.from_user.id, users_input[f"{message.from_user.id}_events_to_update"][update_index], users_input[message.from_user.id])
         bot.send_message(message.from_user.id, "Ewent został zaktualizowany", reply_markup=ReplyKeyboardRemove())
     del users_input[f"{message.from_user.id}_events_to_update"]
@@ -60,8 +63,10 @@ def send_update_answer(message):
 
 @bot.message_handler(content_types=['text'])
 def send_command_message(message):
+    login_markup = InlineKeyboardMarkup()
+    login_markup.add(InlineKeyboardButton("Login", url=create_authorization_url(message.from_user.id)))
     if (not check_user_credentials(message.from_user.id)):
-        bot.send_message(message.chat.id, "Nie jesteś zalogowany proszę się zaloguj ", reply_markup=login_markup)
+        bot.send_message(message.chat.id, "Ups! Nie mam jeszcze Twoich danych. Prosze się zaloguj...⬇️", reply_markup=login_markup)
     else:
         users_input[message.from_user.id] = ai_parse_text(message.text)
         bot_answer = parse_json_to_bot_answer(users_input[message.from_user.id])
@@ -75,13 +80,14 @@ def send_command_message(message):
 def send_callback(call):
     bot.answer_callback_query(call.id)
     if call.data == "yes":
-        bot.send_message(call.message.chat.id, "No dobra już robię")
+        bot.edit_message_text("No dobra już robię", chat_id=call.message.chat.id,
+                              message_id=call.message.id)
         result = manage_events(users_input[call.from_user.id], call.from_user.id)
 
         if (isinstance(result, str)):
             bot.send_message(call.message.chat.id, result)
         else:
-            bot.send_message(call.message.chat.id, construct_events(result))
+            bot.send_message(call.message.chat.id, construct_events(result), parse_mode="HTML")
         if (users_input[call.from_user.id]["event_type"] == EventType.REMOVE.value):
             delete_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             generated_indexes = generate_indexes(result)
@@ -101,7 +107,8 @@ def send_callback(call):
     elif call.data == "no":
         bot.edit_message_text("No to co ty chcesz. Weź napisz", chat_id=call.message.chat.id, message_id=call.message.id)
     elif call.data == "login":
-        create_authorization_url(call.from_user.id)
+        pass
+
 
 
 if __name__ == "__main__":
