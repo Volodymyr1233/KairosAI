@@ -7,8 +7,7 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from GoogleAPI.Event import Event
 from googleapiclient.errors import HttpError
-
-
+from zoneinfo import ZoneInfo
 
 
 def getCredentials(user_token_dict:dict)->Credentials:
@@ -64,7 +63,14 @@ def getEvents(user_token_dict:dict,
         return [Event(x) for x in event_results.get('items', [])]
     except HttpError:
         return None
-
+def getEvent_by_id(user_token_dict:dict,event_id,calendar_id: str = 'primary'):
+    creds = getCredentials(user_token_dict)
+    service = build('calendar', 'v3', credentials=creds)
+    try:
+        event = service.events().get(calendarId=calendar_id, eventId=event_id).execute()
+        return Event(event)
+    except HttpError:
+        return None
 def addEvent(user_token_dict:dict,event: Event,calendar_id: str = 'primary',)->Event | None:
     service = build("calendar", "v3", credentials=getCredentials(user_token_dict))
     try:
@@ -93,12 +99,16 @@ def deleteEvent(user_token_dict:dict, event: Event, calendar_id: str = 'primary'
     return True
 
 
+
 class Reminder:
     """Reminder for one user, and his credential"""
+    timezone_info= "Europe/Warsaw"
     def __init__(self,user_token_dict:dict):
         self._user_token_dict = user_token_dict
-        self._events = [] #sorted by date
+        self._events = [] #sorted by date (id,date)
         pass
+    def __time_now(self):
+        return datetime.now(ZoneInfo(self.timezone_info))
     def setSetUserToken(self,user_token_dict:dict):
         self._user_token_dict = user_token_dict
     def isValidCredential(self):
@@ -109,25 +119,27 @@ class Reminder:
             return False
     def update(self,time_max:str=None):
         """:param time_max: Proper format: 2026-07-01T15:31:00+00:00"""
-        time_min = datetime.now().isoformat()
-        events = getEvents(self._user_token_dict,time_min=time_min) if time_max is None else getEvents(self._user_token_dict,time_max=time_max)
+        time_min = self.__time_now()
+        events = getEvents(self._user_token_dict,time_min=time_min.isoformat()) if time_max is None else getEvents(self._user_token_dict,time_max=time_max)
         self._events = []
+        if events is not None:
+            def __inner_f(ev):
+                for x in ev.reminders['overrides']:
+                    date = datetime.fromisoformat(ev.start['dateTime']) - timedelta(minutes=x['minutes'])
+                    if date>=time_min:
+                        self._events.append((ev.id,date))
 
-        def __inner_f(ev) -> datetime:
-            max = 0
-            for x in ev.reminders['overrides']:
-                if x['minutes'] > max:
-                    max = x['minutes']
-            return datetime.fromisoformat(ev.start) - timedelta(minutes=max)
+            for event in events:
+                if  hasattr(event,'reminders') and 'overrides' in event.reminders:
+                    __inner_f(event)
+            self._events = sorted(self._events, key=lambda ev: ev[1])
 
-        for event in events:
-            if  hasattr(event,'reminders') and 'overrides' in event.reminders:
-                self._events.append((event,__inner_f(event)))
-        self._events = sorted(self._events, key=lambda ev: ev[1])
 
-    def get(self,now=datetime.now().isoformat())->list[Event]:
+    def get(self,now=None)->list[Event]:
+        now = self.__time_now() if now is None else now
         result = []
-        for event,time in self._events:
-            if time <= now:
-                result.append(event)
+        while len(self._events)>0 and self._events[0][1] <=now:
+            temp = getEvent_by_id(self._user_token_dict,event_id=self._events.pop(0)[0])
+            if temp is not None:
+                result.append(temp)
         return result
