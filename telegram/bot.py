@@ -6,8 +6,11 @@ from AI.ai_handler import ai_parse_text
 from utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
 from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, get_user_credential
 from AI.event_schema import EventType
-from GoogleAPI.GoogleCalendarAPI import deleteEvent
-from Credentials.CredentialsFunctions import get_user_credential
+from GoogleAPI.GoogleCalendarAPI import deleteEvent, Reminder
+from Credentials.CredentialsFuntions_online import get_user_credential
+import time
+import threading
+from utils import construct_events
 
 
 load_dotenv()
@@ -26,8 +29,11 @@ markup.add(
 
 users_input = {}
 
+user_chat_id = {}
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    user_chat_id[message.from_user.id] = message.chat.id
     login_markup = InlineKeyboardMarkup()
     login_markup.add(InlineKeyboardButton("Login", url=create_authorization_url(message.from_user.id)))
     if (check_user_credentials(message.from_user.id)):
@@ -53,7 +59,6 @@ def send_update_answer(message):
         bot.send_message(message.from_user.id, "Żaden ewent nie został zaktualizowany!", reply_markup=ReplyKeyboardRemove())
     else:
         update_index = int(message.text) - 1
-        print(users_input[message.from_user.id])
         update_event(message.from_user.id, users_input[f"{message.from_user.id}_events_to_update"][update_index], users_input[message.from_user.id])
         bot.send_message(message.from_user.id, "Ewent został zaktualizowany", reply_markup=ReplyKeyboardRemove())
     del users_input[f"{message.from_user.id}_events_to_update"]
@@ -109,9 +114,25 @@ def send_callback(call):
     elif call.data == "login":
         pass
 
+def send_notifications(bot):
+    while True:
+        if not user_chat_id:
+            time.sleep(10)
+            continue
+
+        for user_id, chat_id in user_chat_id.items():
+            reminder = Reminder(get_user_credential(user_id))
+            reminder.update()
+            get_events_to_remind = reminder.get()
+            print(get_events_to_remind)
+            if (get_events_to_remind):
+                bot.send_message(chat_id, construct_events(get_events_to_remind, "🔔Nadchodzące wydarzenia"), parse_mode="HTML")
+
+        time.sleep(20)
 
 
 if __name__ == "__main__":
+    threading.Thread(target=send_notifications, args=(bot,), daemon=True).start()
     bot.infinity_polling()
 
 

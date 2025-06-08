@@ -1,7 +1,7 @@
 from peewee import *
 
 
-db = SqliteDatabase('E:/Programowanie/Python/KairosAI/Credentials/_online_resources/baza.db')
+db = SqliteDatabase('baza.db')
 db.connect()
 if db.is_closed():
     raise RuntimeError('Database is closed')

@@ -110,11 +110,11 @@ def format_datetime(dt_str):
     except Exception:
         return dt_str or "Brak daty"
 
-def construct_events(events):
+def construct_events(events, title="Twoje wydarzenia"):
     if not events:
         return "🔔 Nie masz żadnych wydarzeń w kalendarzu."
 
-    events_string = "<b>📅 Twoje wydarzenia:</b>\n\n"
+    events_string = f"<b>📅 {title}:</b>\n\n"
 
     for i, event in enumerate(events):
         event_data = event.to_dict()
