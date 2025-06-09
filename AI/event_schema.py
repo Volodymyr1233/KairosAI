@@ -1,7 +1,6 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 import enum
 from datetime import datetime
-import re
 
 
 class EventType(enum.Enum):
@@ -11,6 +10,18 @@ class EventType(enum.Enum):
   SHOW = "Show"
   UNKNOWN = 'Unknown'
 
+class EventColor(enum.Enum):
+    jasnoniebieski = "jasnoniebieski"
+    mietowy = "miętowy"
+    fioletowy = "fioletowy"
+    lososiowy = "łososiowy"
+    zolty = "żółty"
+    pomaranczowy = "pomarańczowy"
+    turkusowy = "turkusowy"
+    szary = "szary"
+    niebieski = "niebieski"
+    zielony = "zielony"
+    czerwony = "czerwony"
 
 class EventAction(BaseModel):
     event_type: EventType
@@ -28,5 +39,5 @@ class EventAction(BaseModel):
     new_attendees_emails: list[str]
     remind_minutes: int | None
     new_remind_minutes: int | None
-    event_color: None | str
-    new_event_color: None | str
+    event_color: None | EventColor
+    new_event_color: None | EventColor
