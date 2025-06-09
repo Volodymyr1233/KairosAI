@@ -38,7 +38,7 @@ class EventBuilder:
         try:
             return datetime.fromisoformat(dateTime).isoformat()
         except ValueError:
-            return ValueError('Invalid date format')
+            raise ValueError('Invalid date format')
     def with_start_date(self, dateTime:str):
         """Proper format: 2026-07-01T15:31:00+00:00"""
         """:raise ValueError if format non valid """
@@ -51,7 +51,7 @@ class EventBuilder:
         return self
     def with_attendees(self,attendees_emails:list | str):
         """Proper format: [<EMAIL>,<EMAIL>]"""
-        if not isinstance(attendees_emails,list):
+        if  isinstance(attendees_emails,str):
             attendees_emails = attendees_emails.split(',')
         for email in attendees_emails:
             temp = email.split('@')

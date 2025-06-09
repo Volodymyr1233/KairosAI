@@ -107,19 +107,17 @@ class Reminder:
         self._user_token_dict = user_token_dict
         self._events = [] #sorted by date (id,date)
         pass
-    def __time_now(self):
+    def _time_now(self):
         return datetime.now(ZoneInfo(self.timezone_info))
-    def setSetUserToken(self,user_token_dict:dict):
+    def setUserToken(self, user_token_dict:dict):
         self._user_token_dict = user_token_dict
-    def isValidCredential(self):
-        try:
-            getCredentials(self._user_token_dict)
-            return True
-        except Exception:
-            return False
+
     def update(self,time_max:str=None):
-        """:param time_max: Proper format: 2026-07-01T15:31:00+00:00"""
-        time_min = self.__time_now()
+        """:param time_max: Proper format: 2026-07-01T15:31:00+00:00
+            get all future event and store it's remind time and id
+        """
+
+        time_min = self._time_now()
         events = getEvents(self._user_token_dict,time_min=time_min.isoformat()) if time_max is None else getEvents(self._user_token_dict,time_max=time_max)
         self._events = []
         if events is not None:
@@ -136,10 +134,15 @@ class Reminder:
 
 
     def get(self,now=None)->list[Event]:
-        now = self.__time_now() if now is None else now
+        """:returns all events to remind, require .update() to get new data"""
+        now = self._time_now() if now is None else now
         result = []
-        while len(self._events)>0 and self._events[0][1] <=now:
-            temp = getEvent_by_id(self._user_token_dict,event_id=self._events.pop(0)[0])
-            if temp is not None:
-                result.append(temp)
+
+        while len(self._events)>0:
+            if self._events[0][1] <=now:
+                temp = getEvent_by_id(self._user_token_dict,event_id=self._events.pop(0)[0])
+                if temp is not None:
+                    result.append(temp)
+            else:
+                break
         return result
