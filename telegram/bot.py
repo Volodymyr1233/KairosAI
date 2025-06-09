@@ -44,6 +44,10 @@ def send_welcome(message):
                          reply_markup=login_markup)
 
 
+@bot.message_handler(commands=['colors'])
+def send_colors(message):
+    bot.send_message(message.from_user.id, "Dostępne kolory dla wydarzeń to: \n🔵 jasnoniebieski\n🌿 miętowy\n💜 fioletowy\n🩷 łososiowy\n💛 żółty\n🟠 pomarańczowy\n🧵 turkusowy\n⚪ szary\n🔷 niebieski\n🌱 zielony\n🔴 czerwony")
+
 @bot.message_handler(
     func=lambda mess: f"{mess.from_user.id}_generated_remove_indexes" in users_input and mess.text in users_input[
         f"{mess.from_user.id}_generated_remove_indexes"])
