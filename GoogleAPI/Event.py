@@ -97,13 +97,6 @@ class EventBuilder:
             return self
         else:
             return self.with_reminders(False,[reminder])
-
-    def with_description(self,description:str):
-        setattr(self._event, 'description', description)
-        return self
-    def with_location(self,location:str):
-        setattr(self._event, 'location', location)
-        return self
     def with_status(self, status:str):
         if status not in ['confirmed','tentative','cancelled']:
             raise ValueError(f'status must be confirmed, tentative or cancelled')
