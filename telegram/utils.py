@@ -7,6 +7,10 @@ from Credentials.CredentialsFuntions_online import get_user_credential
 from dateutil.parser import parse
 from GoogleAPI.Event import Event
 
+
+def convert_data_time(date_time):
+    return parse(date_time).replace(tzinfo=ZoneInfo("Europe/Warsaw")).isoformat()
+
 def parse_json_to_bot_answer(data):
     event_type = data["event_type"]
     if (event_type == EventType.UNKNOWN.value):
@@ -18,62 +22,73 @@ def parse_json_to_bot_answer(data):
         f"<b>Nazwa eventu</b>: {event_name}\n"
     )
 
-    if (data["new_event_name"]):
-        bot_answer_result += f'<b>Nowa nazwa ewentu</b>: {data["new_event_name"]}\n'
-    if (data["event_description"]):
-        bot_answer_result += f'<b>Opis wydarzenia</b>: {data["event_description"]}\n'
-    if (data["new_event_description"]):
-        bot_answer_result += f'<b>Nowy opis wydarzenia</b>: {data["new_event_description"]}\n'
+    if (event_type == EventType.EDIT.value):
+        if (data["new_event_name"]):
+            bot_answer_result += f'<b>Nowa nazwa ewentu</b>: {data["new_event_name"]}\n'
+        if (data["new_event_description"]):
+            bot_answer_result += f'<b>Nowy opis wydarzenia</b>: {data["new_event_description"]}\n'
+        if (data["new_event_color"]):
+            bot_answer_result += f'<b>Nowy kolor ewentu: </b>: {data["new_event_color"]}\n'
+        if (data["new_data_start"]):
+            iso_new_start_date = datetime.fromisoformat(data["new_data_start"])
+            formatted_new_start_date = iso_new_start_date.strftime("%H:%M %d.%m.%Y")
+            bot_answer_result += f"<b>Nowa data i czas początku</b>: {formatted_new_start_date}\n"
+        if (data["new_data_end"]):
+            iso_new_end_date = datetime.fromisoformat(data["new_data_end"])
+            formatted_new_end_date = iso_new_end_date.strftime("%H:%M %d.%m.%Y")
+            bot_answer_result += f"<b>Nowa data i czas końca</b>: {formatted_new_end_date}\n"
+        if (data["new_location"]):
+            bot_answer_result += f'<b>Nowa lokalizacja</b>: {data["new_location"]}\n'
+        if (data["new_attendees_emails"]):
+            bot_answer_result += f'<b>Nowa lista email zaproszonych</b>: {[email.strip() for email in data["new_attendees_emails"]]}\n'
+        if (data["new_remind_minutes"]):
+            bot_answer_result += f'<b>Nowe przypomnienie</b>: {data["new_remind_minutes"]} minut przed\n'
 
-    iso_start_date = datetime.fromisoformat(data["data_start"]).astimezone(ZoneInfo("UTC"))
-    formatted_start_date = iso_start_date.strftime("%H:%M %d.%m.%Y")
 
-    bot_answer_result += f"<b>Data i czas początku</b>: {formatted_start_date}\n"
 
-    iso_end_date = datetime.fromisoformat(data["data_end"]).astimezone(ZoneInfo("UTC"))
-    formatted_end_date = iso_end_date.strftime("%H:%M %d.%m.%Y")
+    else:
+        if (data["event_description"]):
+            bot_answer_result += f'<b>Opis wydarzenia</b>: {data["event_description"]}\n'
+        iso_start_date = datetime.fromisoformat(data["data_start"])
+        formatted_start_date = iso_start_date.strftime("%H:%M %d.%m.%Y")
 
-    bot_answer_result += f"<b>Data i czas końca</b>: {formatted_end_date}\n"
+        bot_answer_result += f"<b>Data i czas początku</b>: {formatted_start_date}\n"
 
-    if (data["event_color"]):
-        bot_answer_result += f'<b>Kolor ewentu: </b>: {data["event_color"]}\n'
+        iso_end_date = datetime.fromisoformat(data["data_end"])
+        formatted_end_date = iso_end_date.strftime("%H:%M %d.%m.%Y")
 
-    if (data["new_event_color"]):
-        bot_answer_result += f'<b>Nowy kolor ewentu: </b>: {data["new_event_color"]}\n'
+        bot_answer_result += f"<b>Data i czas końca</b>: {formatted_end_date}\n"
 
-    if (data["new_data_start"]):
-        iso_new_start_date = datetime.fromisoformat(data["new_data_start"]).astimezone(ZoneInfo("UTC"))
-        formatted_new_start_date = iso_new_start_date.strftime("%H:%M %d.%m.%Y")
-        bot_answer_result += f"<b>Nowa data i czas początku</b>: {formatted_new_start_date}\n"
+        if (data["event_color"]):
+            bot_answer_result += f'<b>Kolor ewentu: </b>: {data["event_color"]}\n'
 
-    if (data["new_data_end"]):
-        iso_new_end_date = datetime.fromisoformat(data["new_data_end"]).astimezone(ZoneInfo("UTC"))
-        formatted_new_end_date = iso_new_end_date.strftime("%H:%M %d.%m.%Y")
-        bot_answer_result += f"<b>Nowa data i czas końca</b>: {formatted_new_end_date}\n"
+        if (data["location"]):
+            bot_answer_result += f'<b>Lokalizacja</b>: {data["location"]}\n'
 
-    if (data["location"]):
-        bot_answer_result += f'<b>Lokalizacja</b>: {data["location"]}\n'
-    if (data["new_location"]):
-        bot_answer_result += f'<b>Nowa lokalizacja</b>: {data["new_location"]}\n'
-    if (data["attendees_emails"]):
-        bot_answer_result += f'<b>Lista email zaproszonych</b>: {[email.strip() for email in data["attendees_emails"]]}\n'
-    if (data["new_attendees_emails"]):
-        bot_answer_result += f'<b>Nowa lista email zaproszonych</b>: {[email.strip() for email in data["new_attendees_emails"]]}\n'
+        if (data["attendees_emails"]):
+            bot_answer_result += f'<b>Lista email zaproszonych</b>: {[email.strip() for email in data["attendees_emails"]]}\n'
+
+        if (data["remind_minutes"]):
+            bot_answer_result += f'<b>Przopomnienie</b>: {data["remind_minutes"]} minut przed\n'
 
     return bot_answer_result
 
 def manage_events(parsed_ai_json, user_id):
     event_name = parsed_ai_json["event_name"]
     event_description = parsed_ai_json["event_description"]
-    data_start = parsed_ai_json["data_start"]
-    data_end = parsed_ai_json["data_end"]
+    data_start = convert_data_time(parsed_ai_json["data_start"])
+    data_end = convert_data_time(parsed_ai_json["data_end"])
     location = parsed_ai_json["location"]
     color_str = parsed_ai_json["event_color"]
+    attendees_list = parsed_ai_json["attendees_emails"]
+    reminder = 0
+    if (parsed_ai_json["remind_minutes"]):
+        reminder =  int(parsed_ai_json["remind_minutes"])
     match parsed_ai_json["event_type"]:
         case EventType.ADD.value:
             print(user_id)
             e = (EventBuilder().with_summary(event_name).with_start_date(
-            data_start).with_end_date(data_end).with_description(event_description).with_location(location).with_color_id(color_to_number(color_str))).build()
+            data_start).with_end_date(data_end).with_attendees(attendees_list).add_reminder("email", reminder).with_description(event_description).with_location(location).with_color_id(color_to_number(color_str))).build()
             addEvent(get_user_credential(user_id), e)
             return "Ewent został dodany"
         case EventType.SHOW.value:
@@ -105,7 +120,7 @@ COLOR_SYMBOLS = {
 
 def format_datetime(dt_str):
     try:
-        dt = datetime.fromisoformat(dt_str).astimezone(ZoneInfo("UTC"))
+        dt = datetime.fromisoformat(dt_str)
         return dt.strftime("%d.%m.%Y %H:%M")
     except Exception:
         return dt_str or "Brak daty"
@@ -124,6 +139,7 @@ def construct_events(events, title="Twoje wydarzenia"):
         start_raw = event_data.get("start", {}).get("dateTime") or event_data.get("start", {}).get("date")
         end_raw = event_data.get("end", {}).get("dateTime") or event_data.get("end", {}).get("date")
         color_id = event_data.get("colorId")
+        attendees_emails = event_data.get("attendees_emails")
 
         color_emoji, color_name = COLOR_SYMBOLS.get(color_id, ("📌", "Domyślny"))
 
@@ -139,7 +155,11 @@ def construct_events(events, title="Twoje wydarzenia"):
             events_string += f"   📍 {location}\n"
         if description:
             events_string += f"   📝 {description.strip()}\n"
+        if attendees_emails:
+            events_string += f"   📩 {[email for email in attendees_emails]}\n"
 
+        if event_data.get("remind_minutes"):
+            events_string += f"   ⏰ {event_data.get('remind_minutes')}\n"
         events_string += "\n"
 
 
@@ -169,13 +189,17 @@ def update_event(user_id, event: Event, parsed_ai_json):
     if (parsed_ai_json["new_event_description"]):
         event_build.with_description(parsed_ai_json["new_event_description"])
     if (parsed_ai_json["new_data_start"]):
-        event_build.with_start_date(parsed_ai_json["new_data_start"])
+        event_build.with_start_date(convert_data_time(parsed_ai_json["new_data_start"]))
     if (parsed_ai_json["new_data_end"]):
-        event_build.with_end_date(parsed_ai_json["new_data_end"])
+        event_build.with_end_date(convert_data_time(parsed_ai_json["new_data_end"]))
     if (parsed_ai_json["new_location"]):
         event_build.with_location(parsed_ai_json["new_location"])
     if (parsed_ai_json["new_event_color"]):
         event_build.with_color_id(color_to_number(parsed_ai_json["new_event_color"]))
+    if (parsed_ai_json["new_attendees_emails"]):
+        event_build.with_attendees(parsed_ai_json["new_attendees_emails"])
+    if (parsed_ai_json["new_remind_minutes"]):
+        event_build.add_reminder("email", parsed_ai_json["new_remind_minutes"])
     e = event_build.build()
     print(e.to_dict())
     updateEvent(get_user_credential(user_id), e)

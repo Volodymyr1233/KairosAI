@@ -127,7 +127,6 @@ def send_notifications(bot):
             print(get_events_to_remind)
             if (get_events_to_remind):
                 bot.send_message(chat_id, construct_events(get_events_to_remind, "🔔Nadchodzące wydarzenia"), parse_mode="HTML")
-
         time.sleep(20)
 
 
