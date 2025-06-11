@@ -23,7 +23,7 @@ class EventBuilder:
     def __init__(self,event=Event()):
         self._event = event
     def as_calendar_event(self):
-        setattr(self, 'king',"calendar#event")
+        setattr(self, 'kind',"calendar#event")
     def with_summary(self,summary:str):
         setattr(self._event, 'summary', summary)
         return self
