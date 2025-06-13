@@ -13,7 +13,7 @@ def convert_data_time(date_time):
 
 def parse_json_to_bot_answer(data):
     event_type = data["event_type"]
-    if (event_type == EventType.UNKNOWN.value):
+    if event_type == EventType.UNKNOWN.value:
         return None
 
     event_name = data["event_name"]
@@ -58,12 +58,15 @@ def parse_json_to_bot_answer(data):
         if (data["event_description"]):
             bot_answer_result += f'<b>Opis wydarzenia</b>: {data["event_description"]}\n'
 
-        if (event_type != EventType.REMOVE.value):
+        if (data["data_start"]):
             iso_start_date = datetime.fromisoformat(data["data_start"])
             formatted_start_date = iso_start_date.strftime("%H:%M %d.%m.%Y")
 
             bot_answer_result += f"<b>Data i czas początku</b>: {formatted_start_date}\n"
 
+
+
+        if (data["data_end"]):
             iso_end_date = datetime.fromisoformat(data["data_end"])
             formatted_end_date = iso_end_date.strftime("%H:%M %d.%m.%Y")
 
@@ -87,11 +90,12 @@ def parse_json_to_bot_answer(data):
             elif (remind_minutes == 1440):
                 bot_answer_result += f'<b>Przopomnienie</b>:  1 dzień przed\n'
             elif (remind_minutes % 1440 == 0):
-                bot_answer_result += f'<b>Przopomnienie</b>:  {int(remind_minutes / 1440) } dni przed\n'
+                bot_answer_result += f'<b>Przopomnienie</b>:  {int(remind_minutes / 1440)} dni przed\n'
             elif (remind_minutes > 1440):
                 bot_answer_result += f'<b>Przopomnienie</b>: {round(remind_minutes / 60, 2)} godzin przed\n'
 
     return bot_answer_result
+
 
 def manage_events(parsed_ai_json, user_id):
     event_name = parsed_ai_json["event_name"]
@@ -103,11 +107,13 @@ def manage_events(parsed_ai_json, user_id):
     attendees_list = parsed_ai_json["attendees_emails"]
     reminder = 0
     if (parsed_ai_json["remind_minutes"]):
-        reminder =  abs(int(parsed_ai_json["remind_minutes"]))
+        reminder = abs(int(parsed_ai_json["remind_minutes"]))
     match parsed_ai_json["event_type"]:
         case EventType.ADD.value:
             e = (EventBuilder().with_summary(event_name).with_start_date(
-            data_start).with_end_date(data_end).with_attendees(attendees_list).add_reminder("email", reminder).with_description(event_description).with_location(location).with_color_id(COLOR_NAME_TO_ID.get(color_str, "1"))).build()
+                data_start).with_end_date(data_end).with_attendees(attendees_list).add_reminder("email",
+                                                                                                reminder).with_description(
+                event_description).with_location(location).with_color_id(COLOR_NAME_TO_ID.get(color_str, "1"))).build()
             addEvent(get_user_credential(user_id), e)
             return "Ewent został dodany"
         case EventType.SHOW.value:
@@ -122,12 +128,14 @@ def manage_events(parsed_ai_json, user_id):
             updated_events = getEvents(get_user_credential(user_id), query=event_name)
             return updated_events
 
+
 def format_datetime(dt_str):
     try:
         dt = datetime.fromisoformat(dt_str)
         return dt.strftime("%d.%m.%Y %H:%M")
     except Exception:
         return dt_str or "Brak daty"
+
 
 COLOR_EMOJIS = {
     "1": "🔹",
@@ -158,6 +166,7 @@ COLOR_NAME_TO_ID = {
     "czerwony": "11",
 }
 
+
 def construct_events(events, title="Twoje wydarzenia"):
     if not events:
         return "🔔 Nie masz żadnych wydarzeń w kalendarzu."
@@ -174,13 +183,12 @@ def construct_events(events, title="Twoje wydarzenia"):
         color_name = event_data.get("colorId")
         attendees_emails = event_data.get("attendees_emails")
 
-
         color_emoji = COLOR_EMOJIS.get(color_name, ("📌"))
 
         start = format_datetime(start_raw)
         end = format_datetime(end_raw) if end_raw else None
 
-        events_string += f"<b>{i+1}. {color_emoji} {summary}</b>\n"
+        events_string += f"<b>{i + 1}. {color_emoji} {summary}</b>\n"
         events_string += f"   🕒 Początek: <i>{start}</i>\n"
         if end:
             events_string += f"   🕓 Koniec: <i>{end}</i>\n"
@@ -196,9 +204,7 @@ def construct_events(events, title="Twoje wydarzenia"):
             events_string += f"   ⏰ {event_data.get('remind_minutes')}\n"
         events_string += "\n"
 
-
     return events_string
-
 
 
 def update_event(user_id, event: Event, parsed_ai_json):
@@ -228,8 +234,10 @@ def update_event(user_id, event: Event, parsed_ai_json):
     e = event_build.build()
     updateEvent(get_user_credential(user_id), e)
 
+
 def generate_indexes(arr):
     return list([str(i) for i in range(1, len(arr) + 1)])
+
 
 def change_event_type(event_type):
     match event_type:
@@ -241,4 +249,3 @@ def change_event_type(event_type):
             return "Edytuj event"
         case EventType.SHOW.value:
             return "Pokaż eventy"
-

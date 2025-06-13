@@ -4,7 +4,7 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from AI.ai_handler import ai_parse_text
 from utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
-from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, get_user_credential
+from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, get_user_credential, delete_user_credential
 from AI.event_schema import EventType
 from GoogleAPI.GoogleCalendarAPI import deleteEvent, Reminder, getEvents
 import time as t
@@ -48,6 +48,19 @@ def send_welcome(message):
 def send_colors(message):
     bot.send_message(message.from_user.id, "Dostępne kolory dla wydarzeń to: \n🔵 jasnoniebieski\n🌿 miętowy\n💜 fioletowy\n🩷 łososiowy\n💛 żółty\n🟠 pomarańczowy\n🧵 turkusowy\n⚪ szary\n🔷 niebieski\n🌱 zielony\n🔴 czerwony")
 
+@bot.message_handler(commands=['wyloguj'])
+def logout_user(message):
+    if (check_user_credentials(message.from_user.id)):
+        try:
+            delete_user_credential(message.from_user.id)
+            bot.send_message(message.from_user.id, "Dziękuję. Jesteś wylogowany")
+        except Exception:
+            bot.send_message(message.from_user.id, "Wylogowanie się nie powiodło")
+    else:
+        bot.send_message(message.from_user.id, "Nie ma twoich danych w bazie")
+
+
+
 @bot.message_handler(
     func=lambda mess: f"{mess.from_user.id}_generated_remove_indexes" in users_input and mess.text in users_input[
         f"{mess.from_user.id}_generated_remove_indexes"])
@@ -72,7 +85,7 @@ def send_remove_answer(message):
     func=lambda mess: f"{mess.from_user.id}_generated_update_indexes" in users_input and mess.text in users_input[
         f"{mess.from_user.id}_generated_update_indexes"])
 def send_update_answer(message):
-    if (message.text == "Anuluj"):
+    if message.text == "Anuluj":
         bot.send_message(message.from_user.id, "Żaden ewent nie został zaktualizowany!",
                          reply_markup=ReplyKeyboardRemove())
     else:
@@ -100,17 +113,15 @@ def send_command_message(message):
     else:
         if not message.from_user.id in user_chat_id:
             user_chat_id[message.from_user.id] = message.chat.id
-        try:
-            users_input[message.from_user.id] = ai_parse_text(message.text)
-            bot_answer = parse_json_to_bot_answer(users_input[message.from_user.id])
-            if bot_answer is not None:
-                bot.send_message(message.chat.id,
-                                 f"{bot_answer} \n\nDokładnie to ode mnie chcesz? Sprawdź czy wszystko się zgadza",
-                                 reply_markup=markup, parse_mode='HTML')
-            else:
-                bot.send_message(message.chat.id, "Nie rozumiem. Proszę napisz dokładniej w czym mogę pomóc)")
-        except Exception:
-            bot.send_message(message.chat.id, "Niestety model AI jest przeciążony, spróbuj poźniej!")
+        users_input[message.from_user.id] = ai_parse_text(message.text)
+        print(users_input[message.from_user.id])
+        bot_answer = parse_json_to_bot_answer(users_input[message.from_user.id])
+        if bot_answer is not None:
+            bot.send_message(message.chat.id,
+                             f"{bot_answer} \n\nDokładnie to ode mnie chcesz? Sprawdź czy wszystko się zgadza",
+                             reply_markup=markup, parse_mode='HTML')
+        else:
+            bot.send_message(message.chat.id, "Nie rozumiem. Proszę napisz dokładniej w czym mogę pomóc)")
 
 
 @bot.callback_query_handler(func=lambda call: call.data in ["yes", "no"])
@@ -121,12 +132,12 @@ def send_callback(call):
                               message_id=call.message.id)
         result = manage_events(users_input[call.from_user.id], call.from_user.id)
 
-        if (isinstance(result, str)):
+        if isinstance(result, str):
             bot.send_message(call.message.chat.id, result)
         else:
             bot.send_message(call.message.chat.id, construct_events(result), parse_mode="HTML")
 
-        if (users_input[call.from_user.id]["event_type"] == EventType.REMOVE.value):
+        if users_input[call.from_user.id]["event_type"] == EventType.REMOVE.value:
             delete_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             generated_indexes = generate_indexes(result)
             generated_indexes.append("Anuluj")
@@ -135,7 +146,7 @@ def send_callback(call):
             delete_markup.add(*generated_indexes)
             bot.send_message(call.message.chat.id, "Wybierz wydarzenie żeby usunąć", reply_markup=delete_markup)
 
-        elif (users_input[call.from_user.id]["event_type"] == EventType.EDIT.value):
+        elif users_input[call.from_user.id]["event_type"] == EventType.EDIT.value:
             update_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
             generate_update_indexes = generate_indexes(result)
             generate_update_indexes.append("Anuluj")
