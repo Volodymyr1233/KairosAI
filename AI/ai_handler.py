@@ -1,7 +1,7 @@
 import os
 from google import genai
 from datetime import datetime
-from AI.event_schema import EventType, AddEvent, ShowEvent, EditEvent, RemoveEvent
+from AI.event_schema import EventType, AddEvent, ShowAndRemoveEvent, EditEvent
 from dotenv import load_dotenv
 import json
 import re
@@ -18,7 +18,7 @@ def check_mails(emails):
 def generate_ai_model(schema, user_input):
     response = client.models.generate_content(
         model="gemini-2.0-flash",
-        contents=f"Dzisiejsza data to: {datetime.now()}.{user_input}",
+        contents=f"Dzisiejsza data to: {datetime.now()} Zinterpretuj poniższe polecenie użytkownika i zwróć **TYLKO** dane zgodne ze schematem, bez zgadywania dodatkowych informacji.. {user_input}",
         config={
             "response_mime_type": "application/json",
             "response_schema": schema
@@ -36,23 +36,18 @@ def detect_event_type(user_input):
 
 def ai_parse_text(user_input):
     event_type = detect_event_type(user_input)
-    print(event_type)
     result = {}
     match event_type:
         case EventType.ADD.value:
             response = generate_ai_model(AddEvent, user_input)
             data = json.loads(response.text)
             result = {"event_type": event_type, **data}
-        case EventType.SHOW.value:
-            response = generate_ai_model(ShowEvent, user_input)
+        case EventType.SHOW.value | EventType.REMOVE.value:
+            response = generate_ai_model(ShowAndRemoveEvent, user_input)
             data = json.loads(response.text)
             result = {"event_type": event_type, **data}
         case EventType.EDIT.value:
             response = generate_ai_model(EditEvent, user_input)
-            data = json.loads(response.text)
-            result = {"event_type": event_type, **data}
-        case EventType.REMOVE.value:
-            response = generate_ai_model(RemoveEvent, user_input)
             data = json.loads(response.text)
             result = {"event_type": event_type, **data}
         case EventType.UNKNOWN.value:

@@ -4,7 +4,8 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from AI.ai_handler import ai_parse_text
 from utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
-from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, get_user_credential, delete_user_credential
+from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, \
+    get_user_credential, delete_user_credential
 from AI.event_schema import EventType
 from GoogleAPI.GoogleCalendarAPI import deleteEvent, Reminder, getEvents
 import time as t
@@ -27,7 +28,7 @@ users_input = {}
 
 user_chat_id = {}
 
-
+user_last_inline_message = {}
 
 
 @bot.message_handler(commands=['start'])
@@ -46,7 +47,9 @@ def send_welcome(message):
 
 @bot.message_handler(commands=['colors'])
 def send_colors(message):
-    bot.send_message(message.from_user.id, "Dostępne kolory dla wydarzeń to: \n🔵 jasnoniebieski\n🌿 miętowy\n💜 fioletowy\n🩷 łososiowy\n💛 żółty\n🟠 pomarańczowy\n🧵 turkusowy\n⚪ szary\n🔷 niebieski\n🌱 zielony\n🔴 czerwony")
+    bot.send_message(message.from_user.id,
+                     "Dostępne kolory dla wydarzeń to: \n🔵 jasnoniebieski\n🌿 miętowy\n💜 fioletowy\n🩷 łososiowy\n💛 żółty\n🟠 pomarańczowy\n🧵 turkusowy\n⚪ szary\n🔷 niebieski\n🌱 zielony\n🔴 czerwony")
+
 
 @bot.message_handler(commands=['wyloguj'])
 def logout_user(message):
@@ -58,7 +61,6 @@ def logout_user(message):
             bot.send_message(message.from_user.id, "Wylogowanie się nie powiodło")
     else:
         bot.send_message(message.from_user.id, "Nie ma twoich danych w bazie")
-
 
 
 @bot.message_handler(
@@ -95,7 +97,8 @@ def send_update_answer(message):
                          users_input[message.from_user.id])
             bot.send_message(message.from_user.id, "Ewent został zaktualizowany", reply_markup=ReplyKeyboardRemove())
         except ValueError:
-            bot.send_message(message.from_user.id, "Podaj prosze i datę początkową i date końca. Napisz jeszcze raz porządnie")
+            bot.send_message(message.from_user.id,
+                             "Podaj prosze i datę początkową i date końca. Napisz jeszcze raz porządnie")
         except Exception:
             bot.send_message(message.from_user.id, "Niestety nie udało się zaktualizować ewentu")
     del users_input[f"{message.from_user.id}_events_to_update"]
@@ -114,12 +117,20 @@ def send_command_message(message):
         if not message.from_user.id in user_chat_id:
             user_chat_id[message.from_user.id] = message.chat.id
         users_input[message.from_user.id] = ai_parse_text(message.text)
-        print(users_input[message.from_user.id])
         bot_answer = parse_json_to_bot_answer(users_input[message.from_user.id])
         if bot_answer is not None:
-            bot.send_message(message.chat.id,
-                             f"{bot_answer} \n\nDokładnie to ode mnie chcesz? Sprawdź czy wszystko się zgadza",
-                             reply_markup=markup, parse_mode='HTML')
+            if not message.from_user.id in user_last_inline_message:
+                sent = bot.send_message(message.chat.id,
+                                        f"{bot_answer} \n\nDokładnie to ode mnie chcesz? Sprawdź czy wszystko się zgadza",
+                                        reply_markup=markup, parse_mode='HTML')
+                user_last_inline_message[message.from_user.id] = sent.message_id
+            elif user_last_inline_message[message.from_user.id]:
+                bot.delete_message(message.chat.id, user_last_inline_message[message.from_user.id])
+                t.sleep(0.5)
+                sent = bot.send_message(message.chat.id,
+                                        f"{bot_answer} \n\nDokładnie to ode mnie chcesz? Sprawdź czy wszystko się zgadza",
+                                        reply_markup=markup, parse_mode='HTML')
+                user_last_inline_message[message.from_user.id] = sent.message_id
         else:
             bot.send_message(message.chat.id, "Nie rozumiem. Proszę napisz dokładniej w czym mogę pomóc)")
 
@@ -135,7 +146,9 @@ def send_callback(call):
         if isinstance(result, str):
             bot.send_message(call.message.chat.id, result)
         else:
-            bot.send_message(call.message.chat.id, construct_events(result), parse_mode="HTML")
+            splitted_text = construct_events(result).split("\t\t")
+            for text in splitted_text:
+                bot.send_message(call.message.chat.id, text, parse_mode="HTML")
 
         if users_input[call.from_user.id]["event_type"] == EventType.REMOVE.value:
             delete_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -144,7 +157,8 @@ def send_callback(call):
             users_input[f"{call.from_user.id}_events_to_delete"] = result
             users_input[f"{call.from_user.id}_generated_remove_indexes"] = generated_indexes
             delete_markup.add(*generated_indexes)
-            bot.send_message(call.message.chat.id, "Wybierz wydarzenie żeby usunąć", reply_markup=delete_markup)
+            if result:
+                bot.send_message(call.message.chat.id, "Wybierz wydarzenie żeby usunąć", reply_markup=delete_markup)
 
         elif users_input[call.from_user.id]["event_type"] == EventType.EDIT.value:
             update_markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -153,8 +167,9 @@ def send_callback(call):
             users_input[f"{call.from_user.id}_events_to_update"] = result
             users_input[f"{call.from_user.id}_generated_update_indexes"] = generate_update_indexes
             update_markup.add(*generate_update_indexes)
-            bot.send_message(call.message.chat.id, "Wybierz wydarzenie które chcesz zaktualizować",
-                             reply_markup=update_markup)
+            if result:
+                bot.send_message(call.message.chat.id, "Wybierz wydarzenie które chcesz zaktualizować",
+                                 reply_markup=update_markup)
     elif call.data == "no":
         bot.edit_message_text("Dobrze w takim razie napisz dokładnie co ty chcesz", chat_id=call.message.chat.id,
                               message_id=call.message.id)
@@ -173,7 +188,9 @@ def send_notifications(bot):
 
             get_events_to_remind = reminders[user_id].get()
             if (get_events_to_remind):
-                bot.send_message(chat_id, construct_events(get_events_to_remind, f"🔔Nadchodzące wydarzenia"),
+                splitted_text = construct_events(get_events_to_remind, f"🔔Nadchodzące wydarzenia").split("\t\t")
+                for text in splitted_text:
+                    bot.send_message(chat_id, text,
                                  parse_mode="HTML")
 
             reminders[user_id].update()
@@ -194,7 +211,9 @@ def send_notifications_for_day(bot):
                                              time_max=datetime.combine(date_now.date(), time(23, 59),
                                                                        tzinfo=tz).isoformat())
                 if (events_for_today):
-                    bot.send_message(chat_id, construct_events(events_for_today, f"🔔Nadchodzące wydarzenia na dziś"),
+                    splitted_text = construct_events(events_for_today, f"🔔Nadchodzące wydarzenia na dziś").split("\t\t")
+                    for text in splitted_text:
+                        bot.send_message(chat_id, text,
                                      parse_mode="HTML")
             t.sleep(86400)  # sen na cały dzień (24 godz)
         else:
