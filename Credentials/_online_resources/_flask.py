@@ -122,6 +122,58 @@ def get_record_db():
         return flask.Response(f'User not found {e}', status=404)
     else:
         return flask.jsonify(x.__dict__['__data__'])
-
+@app.route('/db',methods=['DELETE'])
+def remove_record_db():
+    """:params .json = {'security_token:token123,user_id:5}"""
+    if not flask.request.is_json:
+        return flask.Response('Missing json', status=400)
+    data = flask.request.json
+    if data is None:
+        return flask.Response('No data', status=400)
+    if 'security_token' not in data:
+        return flask.Response('Missing security_token', status=400)
+    if 'user_id' not in data:
+        return flask.Response('Missing user_id', status=400)
+    if data['security_token'] != m.security_token:
+        return flask.Response('Invalid security_token', status=400)
+    try:
+        Models.user_google_token.delete_by_id(data['user_id'])
+    except Exception as e:
+        return flask.Response(f'User not found {e}', status=404)
+    else:
+        return flask.Response(f'User {data["user_id"]} deleted', status=200)
+@app.route('/db',methods=['POST'])
+def post_record_db():
+    """:params .json = {'security_token:token123,user_id:5}"""
+    if not flask.request.is_json:
+        return flask.Response('Missing json', status=400)
+    data = flask.request.json
+    if data is None:
+        return flask.Response('No data', status=400)
+    if 'security_token' not in data:
+        return flask.Response('Missing security_token', status=400)
+    if data['security_token'] != m.security_token:
+        return flask.Response('Invalid security_token', status=400)
+    if not 'table' in data:
+        return flask.Response('Missing table', status=400)
+    if not 'data' in data:
+        return flask.Response('Missing data',status=400)
+    table = data['table']
+    if not table in Models.Model.__subclasses__():
+        return flask.Response(f'Invalid table, no table {table}', status=400)
+    table = Models.Model.__subclasses__()[table]
+    try:
+        args = {}
+        for atrr in table.__dict__.keys():
+            if atrr in data['data']:
+                args[atrr] = data['data'][atrr]
+            else:
+                flask.Response(f'invalid data, missing: {atrr}', status=400)
+        table.insert(**args).execute()
+    except Exception as e:
+        return flask.Response(f'cannot add object {e}', status=404)
+    else:
+        return flask.Response('added model',status=200)
 if __name__ == '__main__':
     app.run(port=5000,debug=True)
+

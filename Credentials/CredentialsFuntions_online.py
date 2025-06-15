@@ -8,7 +8,18 @@ def _request(user_id,security_token)->dict | None:
     data = {'security_token': security_token, 'user_id': user_id}
     headers = {"Content-Type": "application/json"}
     try:
-        r = requests.get(f"https://kairosai.pl/db", data=json.dumps(data), headers=headers)
+        r = requests.get(f"https://kairosai.pl/db", data=json.dumps(data), headers=headers,timeout=5)
+        if r is None:
+            return None
+        else:
+            return r.json()
+    except requests.exceptions.RequestException:
+        return None
+def _request_delete(user_id,security_token)->dict | None:
+    data = {'security_token': security_token, 'user_id': user_id}
+    headers = {"Content-Type": "application/json"}
+    try:
+        r = requests.delete(f"https://kairosai.pl/db", data=json.dumps(data), headers=headers,timeout=5)
         if r is None:
             return None
         else:
@@ -27,11 +38,14 @@ def check_user_credentials(user_id:str)->bool:
 def get_user_credential(user_id:str)->dict | None:
     """:returns user credentials if exists else None"""
     return _request(user_id, security_token)
+def delete_user_credential(user_id:str)->dict | None:
+    """:returns user credentials if exists else None"""
+    return _request_delete(user_id, security_token)
 
 if __name__ == '__main__':
     from GoogleAPI import GoogleCalendarAPI
     print(create_authorization_url('2257'))
-    input('czekam')
+    #input('czekam')
     if check_user_credentials('2257'):
         r = get_user_credential('2257')
         e = GoogleCalendarAPI.getEvents(r)
