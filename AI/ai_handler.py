@@ -30,7 +30,7 @@ def generate_ai_model(schema, user_input):
 
 def detect_event_type(user_input):
     response = generate_ai_model(EventType, user_input)
-    return response.text.strip('"')
+    return response.text.strip().replace('"', '')
 
 
 
