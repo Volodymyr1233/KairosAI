@@ -53,8 +53,21 @@ Kairos AI - your Google Calendar AI Assystent
 - Flask 3.1.0
 - requests 2.32.3
 - google-generativeai 0.8.5
+#### STEP 1:
 ```cmd
-    Python pip install -r requirements.txt
+    git clone https://github.com/Volodymyr1233/KairosAI.git
+```
+#### STEP 2:
+```cmd
+    cd KairosAI
+```
+#### STEP 3:
+```cmd
+    pip install -r requirements.txt
+```
+#### STEP 4:
+```cmd
+    python Telegram/bot.py
 ```
 ## Troubleshoot
 If you encounter any issues or if something isn’t working as expected, feel free to reach out here. You can report problems or ask for help by creating an issue on GitHub.
