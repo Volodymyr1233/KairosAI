@@ -10,8 +10,8 @@ Kairos AI - your Google Calendar AI Assystent
   - [Showing events](#showing-events)  
   - [Modification](#modification)  
   - [Showing incoming events](#showing-incoming-events)
-  - [Instalation](#instalation)  
-  - [Troubleshoot](#Troubleshoot)
+- [Instalation](#instalation)  
+- [Troubleshoot](#Troubleshoot)
 ## How it works? 
 
  - ### Log in
@@ -54,6 +54,9 @@ Kairos AI - your Google Calendar AI Assystent
 - Flask 3.1.0
 - requests 2.32.3
 - google-generativeai 0.8.5
+#### Required enviorment variables
+ - ```GOOGLE_AI_API_KEY```
+ - ```TELEGRAM_API_KEY```
 #### STEP 1:
 ```cmd
     git clone https://github.com/Volodymyr1233/KairosAI.git
@@ -70,6 +73,7 @@ Kairos AI - your Google Calendar AI Assystent
 ```cmd
     python Telegram/bot.py
 ```
+
 ## Troubleshoot
 If you encounter any issues or if something isn’t working as expected, feel free to reach out here. You can report problems or ask for help by creating an issue on GitHub.
 

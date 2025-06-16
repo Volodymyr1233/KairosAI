@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from AI.ai_handler import ai_parse_text
-from utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
+from telegram.utils import parse_json_to_bot_answer, manage_events, construct_events, generate_indexes, update_event
 from Credentials.CredentialsFuntions_online import check_user_credentials, create_authorization_url, \
     get_user_credential, delete_user_credential
 from AI.event_schema import EventType
@@ -220,7 +220,4 @@ def send_notifications_for_day(bot):
             t.sleep(15)
 
 
-if __name__ == "__main__":
-    threading.Thread(target=send_notifications, args=(bot,), daemon=True).start()
-    threading.Thread(target=send_notifications_for_day, args=(bot,), daemon=True).start()
-    bot.infinity_polling()
+
