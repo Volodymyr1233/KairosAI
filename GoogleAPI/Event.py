@@ -20,8 +20,8 @@ class Event:
 
 class EventBuilder:
     """Builder pattern"""
-    def __init__(self,event=Event()):
-        self._event = event
+    def __init__(self,event=None):
+        self._event = event if event is not None else Event()
     def as_calendar_event(self):
         setattr(self, 'king',"calendar#event")
     def with_summary(self,summary:str):
