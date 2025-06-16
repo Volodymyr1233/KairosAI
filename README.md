@@ -9,7 +9,8 @@ Kairos AI - your Google Calendar AI Assystent
   - [Deleting events](#deleting-events)  
   - [Showing events](#showing-events)  
   - [Modification](#modification)  
-  - [Showing incoming events](#showing-incoming-events)  
+  - [Showing incoming events](#showing-incoming-events)
+  - [Instalation](#instalation)  
   - [Troubleshoot](#Troubleshoot)
 ## How it works? 
 
